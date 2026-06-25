@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DAEMON — Your Always-On AI Operator</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #0a0a0f;
+    color: #e4e4e7;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* Terminal grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Nav */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .logo {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 1.4rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+    text-decoration: none;
+  }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, #6ee7b7, #3b82f6);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: #000;
+    font-weight: 800;
+  }
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    align-items: center;
+  }
+  .nav-links a {
+    color: #a1a1aa;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: #fff; }
+  .nav-cta {
+    background: linear-gradient(135deg, #6ee7b7, #3b82f6);
+    color: #000 !important;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-weight: 600 !important;
+    transition: opacity 0.2s !important;
+  }
+  .nav-cta:hover { opacity: 0.9; color: #000 !important; }
+
+  /* Hero */
+  .hero {
+    padding: 100px 0 80px;
+    text-align: center;
+  }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(110, 231, 183, 0.08);
+    border: 1px solid rgba(110, 231, 183, 0.15);
+    padding: 6px 16px;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    color: #6ee7b7;
+    font-weight: 500;
+    margin-bottom: 32px;
+  }
+  .hero h1 {
+    font-size: clamp(2.8rem, 6vw, 5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #fff 30%, #6ee7b7, #3b82f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 24px;
+    letter-spacing: -0.03em;
+  }
+  .hero p {
+    font-size: 1.15rem;
+    color: #a1a1aa;
+    max-width: 640px;
+    margin: 0 auto 40px;
+    line-height: 1.7;
+  }
+  .hero-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #6ee7b7, #3b82f6);
+    color: #000;
+    padding: 14px 32px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(59,130,246,0.3);
+  }
+  .btn-secondary {
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #e4e4e7;
+    padding: 14px 32px;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 1rem;
+    text-decoration: none;
+    transition: background 0.2s, border-color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-secondary:hover {
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(255,255,255,0.2);
+  }
+
+  /* Terminal Demo */
+  .terminal-demo {
+    max-width: 800px;
+    margin: 60px auto 0;
+    background: #111118;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    overflow: hidden;
+    text-align: left;
+  }
+  .terminal-header {
+    background: #18181e;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .terminal-dot:nth-child(1) { background: #ff5f56; }
+  .terminal-dot:nth-child(2) { background: #ffbd2e; }
+  .terminal-dot:nth-child(3) { background: #27c93f; }
+  .terminal-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: #666;
+    margin-left: 8px;
+  }
+  .terminal-body {
+    padding: 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    line-height: 1.8;
+    color: #a1a1aa;
+  }
+  .terminal-body .prompt { color: #6ee7b7; }
+  .terminal-body .output { color: #e4e4e7; }
+  .terminal-body .dim { color: #52525b; }
+  .terminal-body .highlight { color: #3b82f6; }
+  .cursor-blink {
+    display: inline-block;
+    width: 8px; height: 16px;
+    background: #6ee7b7;
+    animation: blink 1s step-end infinite;
+    vertical-align: text-bottom;
+    margin-left: 2px;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* Trust bar */
+  .trust-bar {
+    padding: 60px 0;
+    text-align: center;
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+  .trust-bar p {
+    font-size: 0.8rem;
+    color: #52525b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 24px;
+  }
+  .trust-logos {
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    flex-wrap: wrap;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: #3f3f46;
+  }
+  .trust-logos span { opacity: 0.6; }
+
+  /* Features */
+  .features {
+    padding: 100px 0;
+  }
+  .section-label {
+    font-size: 0.75rem;
+    color: #6ee7b7;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .features h2 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+  }
+  .features > .container > p {
+    color: #a1a1aa;
+    max-width: 500px;
+    margin-bottom: 60px;
+  }
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+  }
+  .feature-card {
+    background: #111118;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px;
+    padding: 32px;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .feature-card:hover {
+    border-color: rgba(110, 231, 183, 0.15);
+    transform: translateY(-2px);
+  }
+  .feature-icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    margin-bottom: 20px;
+  }
+  .feature-card h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+  .feature-card p {
+    font-size: 0.88rem;
+    color: #a1a1aa;
+    line-height: 1.7;
+  }
+
+  /* Pricing */
+  .pricing {
+    padding: 100px 0;
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+  .pricing h2 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    color: #fff;
+    text-align: center;
+    margin-bottom: 12px;
+    letter-spacing: -0.02em;
+  }
+  .pricing > .container > p {
+    text-align: center;
+    color: #a1a1aa;
+    margin-bottom: 60px;
+  }
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    align-items: start;
+  }
+  .pricing-card {
+    background: #111118;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 40px 32px;
+    position: relative;
+    transition: border-color 0.2s;
+  }
+  .pricing-card.featured {
+    border-color: rgba(110, 231, 183, 0.2);
+    background: linear-gradient(135deg, #111118, #0c1a12);
+  }
+  .pricing-card.featured::before {
+    content: 'Best Value';
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #6ee7b7, #3b82f6);
+    color: #000;
+    padding: 4px 16px;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .pricing-card h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+  .pricing-card .subtitle {
+    font-size: 0.85rem;
+    color: #a1a1aa;
+    margin-bottom: 24px;
+  }
+  .pricing-card .price {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+  .pricing-card .price span {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #a1a1aa;
+  }
+  .pricing-card .setup {
+    font-size: 0.85rem;
+    color: #52525b;
+    margin-bottom: 24px;
+  }
+  .pricing-card ul {
+    list-style: none;
+    margin-bottom: 32px;
+  }
+  .pricing-card ul li {
+    padding: 8px 0;
+    font-size: 0.88rem;
+    color: #d4d4d8;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .pricing-card ul li::before {
+    content: '✓';
+    color: #6ee7b7;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .pricing-card .btn-pricing {
+    display: block;
+    text-align: center;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .pricing-card .btn-pricing.light {
+    background: #fff;
+    color: #000;
+  }
+  .pricing-card .btn-pricing.light:hover { opacity: 0.9; }
+  .pricing-card .btn-pricing.dark {
+    background: rgba(255,255,255,0.06);
+    color: #e4e4e7;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .pricing-card .btn-pricing.dark:hover { background: rgba(255,255,255,0.1); }
+
+  /* 232 Agents */
+  .agents {
+    padding: 100px 0;
+    background: linear-gradient(180deg, transparent, rgba(110,231,183,0.02));
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+  .agents h2 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    color: #fff;
+    text-align: center;
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+  }
+  .agents > .container > p {
+    text-align: center;
+    color: #a1a1aa;
+    max-width: 600px;
+    margin: 0 auto 60px;
+  }
+  .agent-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+  }
+  .agent-tag {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+    padding: 12px 16px;
+    text-align: center;
+    font-size: 0.82rem;
+    color: #a1a1aa;
+    transition: all 0.2s;
+    cursor: default;
+  }
+  .agent-tag:hover {
+    background: rgba(110, 231, 183, 0.06);
+    border-color: rgba(110, 231, 183, 0.15);
+    color: #e4e4e7;
+  }
+  .agent-tag .emoji { font-size: 1.2rem; display: block; margin-bottom: 4px; }
+
+  /* FAQ */
+  .faq {
+    padding: 100px 0;
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+  .faq h2 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 700;
+    color: #fff;
+    text-align: center;
+    margin-bottom: 48px;
+  }
+  .faq-list {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .faq-item {
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding: 20px 0;
+  }
+  .faq-q {
+    font-weight: 600;
+    color: #e4e4e7;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+  }
+  .faq-q::after {
+    content: '+';
+    font-size: 1.2rem;
+    color: #52525b;
+    transition: transform 0.2s;
+  }
+  .faq-q.open::after { transform: rotate(45deg); }
+  .faq-a {
+    color: #a1a1aa;
+    font-size: 0.88rem;
+    padding-top: 12px;
+    line-height: 1.7;
+    display: none;
+  }
+  .faq-a.show { display: block; }
+
+  /* CTA */
+  .cta {
+    padding: 100px 0;
+    text-align: center;
+    background: linear-gradient(180deg, transparent, rgba(59,130,246,0.04));
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+  .cta h2 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+  }
+  .cta p {
+    color: #a1a1aa;
+    max-width: 500px;
+    margin: 0 auto 40px;
+  }
+
+  /* Footer */
+  footer {
+    padding: 40px 0;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    text-align: center;
+  }
+  footer p {
+    font-size: 0.82rem;
+    color: #52525b;
+  }
+
+  /* BYOK tag */
+  .byok {
+    display: inline-block;
+    background: rgba(59, 130, 246, 0.08);
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    color: #3b82f6;
+    font-weight: 600;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  @media (max-width: 768px) {
+    .nav-links { display: none; }
+    .hero { padding: 60px 0 40px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="container">
+  <a href="#" class="logo">
+    <span class="logo-icon">D</span>
+    DAEMON
+  </a>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#agents">232 Agents</a>
+    <a href="#faq">FAQ</a>
+    <a href="#cta" class="nav-cta">Get Yours →</a>
+  </div>
+</nav>
+
+<section class="hero container">
+  <div class="hero-badge">
+    ⚡ Always-on AI operator · Telegram-controlled · DeepSeek Flash
+  </div>
+  <h1>Your AI daemon<br>never sleeps.</h1>
+  <p>A Hermes Agent running 24/7 on a VPS, controlled from Telegram. Research, code, automate, report — while you focus on what matters.</p>
+  <div class="hero-actions">
+    <a href="#pricing" class="btn-primary">See Plans →</a>
+    <a href="#features" class="btn-secondary">How it works</a>
+  </div>
+
+  <div class="terminal-demo">
+    <div class="terminal-header">
+      <span class="terminal-dot"></span>
+      <span class="terminal-dot"></span>
+      <span class="terminal-dot"></span>
+      <span class="terminal-title">~/daemon — Telegram session</span>
+    </div>
+    <div class="terminal-body">
+      <span class="dim"># DAEMON is always running. Text it from Telegram.</span><br>
+      <span class="prompt">you →</span> <span class="output">research latest AI agent funding rounds this month</span><br>
+      <span class="dim"># DAEMON thinks, searches, compiles...</span><br>
+      <span class="prompt">daemon →</span> <span class="output">Found 12 rounds. Top 3:<br>• Terminal Use (YC W26) — $500K — "Vercel for agents"<br>• Skyvern (YC S23) — $3.2M — browser AI agents<br>• Simplex (YC S24) — $1.8M — agent automation</span><br>
+      <span class="prompt">you →</span> <span class="output">save that to my research log and schedule a weekly scan</span><br>
+      <span class="dim"># DAEMON writes to your repo and sets up a cron job...</span><br>
+      <span class="prompt">daemon →</span> <span class="output">✓ Saved to research-log.md<br>✓ Cron job set: every Monday 9AM</span><span class="cursor-blink"></span>
+    </div>
+  </div>
+</section>
+
+<section class="trust-bar">
+  <div class="container">
+    <p>Powered by</p>
+    <div class="trust-logos">
+      <span>Hermes Agent</span>
+      <span>DeepSeek Flash</span>
+      <span>Hetzner VPS</span>
+      <span>Telegram API</span>
+      <span>GitHub</span>
+    </div>
+  </div>
+</section>
+
+<section class="features" id="features">
+  <div class="container">
+    <div class="section-label">✦ Features</div>
+    <h2>What DAEMON does<br>while you sleep.</h2>
+    <p>It's not a chatbot. It's a 24/7 operator with tools, memory, and autonomy.</p>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(110,231,183,0.1);">🧠</div>
+        <h3>Persistent Memory</h3>
+        <p>DAEMON remembers everything — projects, preferences, context. No more repeating yourself. Cross-session memory that actually works.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(59,130,246,0.1);">🔍</div>
+        <h3>Web Research</h3>
+        <p>Ask DAEMON to research competitors, find leads, monitor markets. It browses, extracts, and saves findings to your workspace. Automatically.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(251,191,36,0.1);">⚡</div>
+        <h3>Code & Execute</h3>
+        <p>DAEMON runs code, edits files, manages git, deploys services. Full shell access. You review — it builds. Or it fixes things autonomously.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(239,68,68,0.1);">⏰</div>
+        <h3>Scheduled Cron Jobs</h3>
+        <p>Daily reports, market scans, website monitors, data backups. DAEMON runs on a schedule and delivers summaries to your Telegram. Set and forget.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(168,85,247,0.1);">👥</div>
+        <h3>232 Expert Personas</h3>
+        <p>Switch DAEMON into any specialist instantly. Frontend dev, growth hacker, sales coach, security auditor, UX researcher. Each one is a crafted expert.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(34,211,238,0.1);">🔗</div>
+        <h3>Platform Native</h3>
+        <p>Works through Telegram, Discord, Slack, WhatsApp, or the CLI. Text DAEMON from your phone and it jumps into action. No dashboard needed.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pricing" id="pricing">
+  <div class="container">
+    <div class="section-label" style="text-align:center;">✦ Pricing</div>
+    <h2>Simple. No surprises.</h2>
+    <p>You bring your own API key — zero billing risk. Pay only for hosting and setup.</p>
+    <div class="pricing-grid">
+      <div class="pricing-card">
+        <h3>DAEMON Lite</h3>
+        <div class="subtitle">For personal use</div>
+        <div class="price">€149<span>/setup</span></div>
+        <div class="setup">+ €39/month hosting</div>
+        <ul>
+          <li>Single Hermes agent on VPS</li>
+          <li>Telegram-connected</li>
+          <li>Basic tools: web, file, terminal</li>
+          <li>1 custom personality</li>
+          <li>24h turnaround</li>
+          <li>Browser-based setup call</li>
+        </ul>
+        <a href="#" class="btn-pricing dark">Coming Soon</a>
+      </div>
+      <div class="pricing-card featured">
+        <h3>DAEMON</h3>
+        <div class="subtitle">Most popular</div>
+        <div class="price">€249<span>/setup</span></div>
+        <div class="setup">+ €59/month hosting</div>
+        <ul>
+          <li>Full Hermes agent on VPS</li>
+          <li>Telegram + multi-platform</li>
+          <li>All tools: web, file, terminal, code</li>
+          <li>Cron job configuration</li>
+          <li>Persistent memory setup</li>
+          <li>232 expert personas pre-loaded</li>
+          <li>48h turnaround</li>
+          <li>2h training call</li>
+        </ul>
+        <a href="#cta" class="btn-pricing light">Pre-order →</a>
+      </div>
+      <div class="pricing-card">
+        <h3>DAEMON Pro</h3>
+        <div class="subtitle">For teams & power users</div>
+        <div class="price">€449<span>/setup</span></div>
+        <div class="setup">+ €99/month hosting</div>
+        <ul>
+          <li>Multi-agent system (2-3 agents)</li>
+          <li>Priority support</li>
+          <li>Custom tool integrations</li>
+          <li>Custom cron workflows</li>
+          <li>White-label branding</li>
+          <li>Custom knowledge base</li>
+          <li>4h dedicated training</li>
+          <li>Monitoring & alerts</li>
+        </ul>
+        <a href="#" class="btn-pricing dark">Coming Soon</a>
+      </div>
+    </div>
+    <p style="text-align:center;margin-top:32px;font-size:0.85rem;color:#52525b;">All tiers: <strong style="color:#a1a1aa;">Bring your own API key</strong> (DeepSeek ~€15-25/mo). Zero API cost risk for you.</p>
+  </div>
+</section>
+
+<section class="agents" id="agents">
+  <div class="container">
+    <div class="section-label" style="text-align:center;">✦ DAEMON ships with</div>
+    <h2>232 expert agents.<br>One Telegram message away.</h2>
+    <p>Powered by The Agency — 116k★ open-source collection of crafted AI personalities. Switch personas instantly.</p>
+    <div class="agent-grid">
+      <div class="agent-tag"><span class="emoji">🎨</span>Frontend Dev</div>
+      <div class="agent-tag"><span class="emoji">🏗️</span>Backend Architect</div>
+      <div class="agent-tag"><span class="emoji">🤖</span>AI Engineer</div>
+      <div class="agent-tag"><span class="emoji">🚀</span>DevOps Automator</div>
+      <div class="agent-tag"><span class="emoji">📱</span>Mobile Builder</div>
+      <div class="agent-tag"><span class="emoji">🎯</span>Growth Hacker</div>
+      <div class="agent-tag"><span class="emoji">📢</span>Content Creator</div>
+      <div class="agent-tag"><span class="emoji">🔍</span>SEO Specialist</div>
+      <div class="agent-tag"><span class="emoji">💬</span>Social Strategist</div>
+      <div class="agent-tag"><span class="emoji">📧</span>Email Marketer</div>
+      <div class="agent-tag"><span class="emoji">💰</span>Sales Coach</div>
+      <div class="agent-tag"><span class="emoji">🤝</span>Deal Strategist</div>
+      <div class="agent-tag"><span class="emoji">📊</span>Pipeline Analyst</div>
+      <div class="agent-tag"><span class="emoji">📝</span>Proposal Strategist</div>
+      <div class="agent-tag"><span class="emoji">🔒</span>Security Architect</div>
+      <div class="agent-tag"><span class="emoji">🛡️</span>Penetration Tester</div>
+      <div class="agent-tag"><span class="emoji">🚨</span>Incident Responder</div>
+      <div class="agent-tag"><span class="emoji">📋</span>Compliance Auditor</div>
+      <div class="agent-tag"><span class="emoji">🎨</span>UI Designer</div>
+      <div class="agent-tag"><span class="emoji">🧪</span>UX Researcher</div>
+      <div class="agent-tag"><span class="emoji">📐</span>Brand Guardian</div>
+      <div class="agent-tag"><span class="emoji">💡</span>Product Manager</div>
+      <div class="agent-tag"><span class="emoji">📈</span>Financial Analyst</div>
+      <div class="agent-tag"><span class="emoji">🏦</span>Tax Strategist</div>
+      <div class="agent-tag"><span class="emoji">📚</span>Technical Writer</div>
+      <div class="agent-tag"><span class="emoji">🔬</span>Data Engineer</div>
+      <div class="agent-tag"><span class="emoji">⚙️</span>SRE Engineer</div>
+      <div class="agent-tag"><span class="emoji">🎮</span>Game Designer</div>
+      <div class="agent-tag"><span class="emoji">🌍</span>GIS Specialist</div>
+      <div class="agent-tag"><span class="emoji">📱</span>ASO Optimizer</div>
+      <div class="agent-tag"><span class="emoji">🧠</span>Prompt Engineer</div>
+      <div class="agent-tag"><span class="emoji">🔄</span>Git Workflow</div>
+    </div>
+  </div>
+</section>
+
+<section class="faq" id="faq">
+  <div class="container">
+    <h2>Frequently Asked Questions</h2>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('show')">What is DAEMON exactly?</div>
+        <div class="faq-a">DAEMON is a <strong>managed Hermes Agent</strong> running on a dedicated VPS. You control it through Telegram — it thinks, uses tools, browses the web, runs code, and reports back. Think of it as a 24/7 AI operator that works for you.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('show')">How is this different from ChatGPT or Claude?</div>
+        <div class="faq-a">DAEMON is autonomous and persistent. It has memory across sessions, can run code, edit files, browse the web, manage cron jobs, and work while you're offline. ChatGPT is a chat. DAEMON is an operator.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('show')">What about API costs? Who pays for the LLM?</div>
+        <div class="faq-a">You bring your own API key (DeepSeek, Anthropic, or any provider). Typical DeepSeek Flash usage for a power user runs €15-25/month. We never touch your key — zero billing risk for us, full control for you.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('show')">How fast can I get DAEMON running?</div>
+        <div class="faq-a">Lite: 24 hours. Standard DAEMON: 48 hours. Pro: custom timeline. We provision the VPS, configure Hermes, connect Telegram, set up your personality and tools — then hand you the keys.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('show')">Can I switch between the 232 agent personas?</div>
+        <div class="faq-a">Yes. Every DAEMON ships with all 232 expert personas from The Agency (116k★ GitHub). One Telegram message switches DAEMON from "Growth Hacker" to "Security Auditor" to "Frontend Developer". Each persona has full context and specialized workflows.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('show')">What platforms does DAEMON work on?</div>
+        <div class="faq-a">Telegram is primary (you text it from your phone). Also supports Discord, Slack, WhatsApp, Signal, Matrix, Email, and CLI. All from the same Hermes instance.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('show')">Can I cancel anytime?</div>
+        <div class="faq-a">Yes. Monthly hosting is paid per month — no contract. If you cancel, we give you the VPS credentials and all your data. You keep everything.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta" id="cta">
+  <div class="container">
+    <div class="section-label" style="text-align:center;">✦ Get your DAEMON</div>
+    <h2>Ready to never work alone?</h2>
+    <p>DAEMON is pre-order now. Setup takes 48 hours. You bring the API key, we bring the daemon.</p>
+    <a href="https://t.me/eklavyagoyal" class="btn-primary" target="_blank">Message to Pre-order →</a>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>DAEMON — Built with Hermes Agent &middot; DeepSeek Flash &middot; Hetzner VPS</p>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -14,6 +14,7 @@
 </p>
 
 <p align="center">
+  <a href="https://daemon-site-two.vercel.app">daemon-site-two.vercel.app</a> ·
   <a href="#pricing">See Plans</a> ·
   <a href="#demo">Live Demo</a> ·
   <a href="https://t.me/eklavyagoyal">Pre-order on Telegram</a>
